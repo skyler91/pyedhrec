@@ -10,6 +10,7 @@ class EDHRec:
     def __init__(self, cookies: str = None):
         self.cookies = cookies
         self.session = requests.Session()
+        self.session.proxies
         if self.cookies:
             self.session.cookies = self.get_cookie_jar(cookies)
         self.session.headers = {
@@ -79,7 +80,7 @@ class EDHRec:
         # We have a build ID set
         return True
 
-    def _build_nextjs_uri(self, endpoint: str, card_name: str, slug: str = None, theme: str = None, budget: str = None):
+    def _build_nextjs_uri(self, endpoint: str, card_name: str, slug: str = None, theme: str = None, budget: str = None, filter: str = None):
         self.check_build_id()
         formatted_card_name = self.format_card_name(card_name)
         query_params = {
@@ -107,6 +108,9 @@ class EDHRec:
         if endpoint == "combos":
             query_params["colors"] = formatted_card_name
 
+        if filter:
+            query_params["f"] = filter
+
         return uri, query_params
 
     @staticmethod
@@ -114,8 +118,8 @@ class EDHRec:
         if "pageProps" in response:
             return response.get("pageProps", {}).get("data")
 
-    def _get_cardlist_from_container(self, card_name: str, tag: str = None) -> dict:
-        card_data = self.get_commander_data(card_name)
+    def _get_cardlist_from_container(self, card_name: str, tag: str = None, filter: str = None) -> dict:
+        card_data = self.get_commander_data(card_name, filter)
         container = card_data.get("container", {})
         json_dict = container.get("json_dict", {})
         card_lists = json_dict.get("cardlists")
@@ -171,8 +175,8 @@ class EDHRec:
         return uri
 
     @commander_cache
-    def get_commander_data(self, card_name: str) -> dict:
-        commander_uri, params = self._build_nextjs_uri("commanders", card_name)
+    def get_commander_data(self, card_name: str, filter: str = None) -> dict:
+        commander_uri, params = self._build_nextjs_uri("commanders", card_name, filter=filter)
         res = self._get(commander_uri, query_params=params)
         data = self._get_nextjs_data(res)
         return data
@@ -199,8 +203,8 @@ class EDHRec:
         card_list = self._get_cardlist_from_container(card_name)
         return card_list
 
-    def get_new_cards(self, card_name: str) -> dict:
-        card_list = self._get_cardlist_from_container(card_name, "newcards")
+    def get_new_cards(self, card_name: str, filter: str = None) -> dict:
+        card_list = self._get_cardlist_from_container(card_name, "newcards", filter)
         return card_list
 
     def get_high_synergy_cards(self, card_name: str) -> dict:
