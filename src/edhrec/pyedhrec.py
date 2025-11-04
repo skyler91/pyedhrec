@@ -49,7 +49,7 @@ class EDHRec:
         # remove double quotes
         card_name = card_name.replace('"', "")
         # If the name contains '//' (e.g. dfc) remove it
-        return card_name.split('//')[0]
+        return card_name.split('-//-')[0]
 
     def _get(self, uri: str, query_params: dict =None, return_type: str = "json") -> dict:
         res = self.session.get(uri, params=query_params)
